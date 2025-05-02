@@ -1,103 +1,230 @@
-import Image from "next/image";
+"use client";
+import React, { useEffect, useState } from "react";
+import { Button, TextField, Box, Modal } from "@mui/material"; // MUIコンポーネントのインポート
+import { Add } from "@mui/icons-material"; // アイコンのインポート
+import "./styles.css";
+import { Todo, Step, MiniStep, PointedObject } from "../modules/TodoClasses"; // Todo, Step, MiniStepのインポート
 
-export default function Home() {
+const App = () => {
+  // インスタンス作成
+  const [todo, setTodo] = useState(new Todo("My Todo"));
+  const step1 = new Step("Step 1");
+  const step2 = new Step("Step 2");
+
+  useEffect(() => {
+    step1.addMiniStep(new MiniStep("Mini Step 1.1"));
+    step1.addMiniStep(new MiniStep("Mini Step 1.2"));
+
+    step2.addMiniStep(new MiniStep("Mini Step 2.1"));
+
+    todo.addStep(step1);
+    todo.addStep(step2);
+  }, []);
+
+  const [pointedObject, setPointedObject] = useState<PointedObject | null>(null);
+
+  const [editingObject, setEditingObject] = useState<PointedObject | null>(null);
+
+  const [editingText, setEditingText] = useState<string>("");
+
+  const [isComposing, setIsComposing] = useState(false);
+
+  const handleDoubleClick = () => {
+    if (editingObject) {
+      return;
+    }
+    if (!pointedObject) {
+      return;
+    }
+    setEditingObject(pointedObject);
+
+    if (pointedObject.stepIndex === -1 && pointedObject.miniStepIndex === -1) {
+      setEditingText(todo.title);
+    } else if (pointedObject.miniStepIndex === -1) {
+      setEditingText(todo.steps[pointedObject.stepIndex].stepTitle);
+    } else {
+      setEditingText(todo.steps[pointedObject.stepIndex].miniSteps[pointedObject.miniStepIndex].miniStepTitle);
+    }
+  };
+
+  const handleEdit = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditingText(e.target.value);
+  };
+
+  const handleBlur = () => {
+    if (!editingObject) return;
+
+    setTodo((prevTodo) => {
+      const updatedTodo = prevTodo;
+
+      if (editingObject.stepIndex === -1 && editingObject.miniStepIndex === -1) {
+        updatedTodo.title = editingText;
+      } else if (editingObject.miniStepIndex === -1) {
+        updatedTodo.steps[editingObject.stepIndex].stepTitle = editingText;
+      } else {
+        updatedTodo.steps[editingObject.stepIndex].miniSteps[editingObject.miniStepIndex].miniStepTitle = editingText;
+      }
+
+      return updatedTodo;
+    });
+
+    setEditingObject(null);
+  };
+
+  const [open, setOpen] = useState(false); // モーダルの状態管理
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div>
+      <h1
+        onMouseEnter={() => setPointedObject(new PointedObject(0, -1, -1))}
+        onMouseLeave={() => setPointedObject(null)}
+        onDoubleClick={() => handleDoubleClick()}
+        className="pointer"
+      >
+        {editingObject && editingObject.todoIndex === 0 && editingObject.stepIndex === -1 ? (
+          <input
+            type="text"
+            value={editingText}
+            onChange={handleEdit}
+            onBlur={handleBlur}
+            onKeyDown={(e) => {
+              if (!isComposing && e.key === "Enter") {
+                handleBlur();
+              }
+            }}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
+            autoFocus
+          />
+        ) : (
+          todo.title
+        )}
+      </h1>
+      {todo.steps.map((step, stepIndex) => (
+        <div key={stepIndex}>
+          <h2
+            onMouseEnter={() => setPointedObject(new PointedObject(0, stepIndex, -1))}
+            onMouseLeave={() => setPointedObject(null)}
+            onDoubleClick={() => handleDoubleClick()}
+            className="pointer"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {editingObject && editingObject.stepIndex === stepIndex && editingObject.miniStepIndex === -1 ? (
+              <input
+                type="text"
+                value={editingText}
+                onChange={handleEdit}
+                onBlur={handleBlur}
+                onKeyDown={(e) => {
+                  if (!isComposing && e.key === "Enter") {
+                    handleBlur();
+                  }
+                }}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
+                autoFocus
+              />
+            ) : (
+              `- ${step.stepTitle}`
+            )}
+          </h2>
+          <ul>
+            {step.miniSteps.map((miniStep, miniStepIndex) => (
+              <li
+                key={miniStepIndex}
+                onMouseEnter={() => setPointedObject(new PointedObject(0, stepIndex, miniStepIndex))}
+                onMouseLeave={() => setPointedObject(null)}
+                onDoubleClick={() => handleDoubleClick()}
+                className="pointer"
+              >
+                {editingObject &&
+                editingObject.stepIndex === stepIndex &&
+                editingObject.miniStepIndex === miniStepIndex ? (
+                  <input
+                    type="text"
+                    value={editingText}
+                    onChange={handleEdit}
+                    onBlur={handleBlur}
+                    onKeyDown={(e) => {
+                      if (!isComposing && e.key === "Enter") {
+                        handleBlur();
+                      }
+                    }}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
+                    autoFocus
+                  />
+                ) : (
+                  `-- ${miniStep.miniStepTitle}`
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      ))}
+
+      {pointedObject && (
+        <div className="centered-modal">
+          <h2>Todo Index: {pointedObject.todoIndex}</h2>
+          {pointedObject.stepIndex >= 0 && <h3>Step Index: {pointedObject.stepIndex}</h3>}
+          {pointedObject.miniStepIndex >= 0 && <h4>Mini Step Index: {pointedObject.miniStepIndex}</h4>}
+          {editingObject && (
+            <div>
+              <h4>Editing Object: {JSON.stringify(editingObject)}</h4>
+            </div>
+          )}
+          <button onClick={() => setPointedObject(null)}>閉じる</button>
+        </div>
+      )}
+
+      {/* フローティングボタン */}
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<Add />}
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "20px",
+        }}
+        onClick={handleOpen}
+      >
+        Add Step
+      </Button>
+
+      {/* モーダル */}
+      <Modal open={open} onClose={handleClose}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <h2>Add a New Step</h2>
+          <TextField fullWidth label="Step Title" variant="outlined" margin="normal" />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              alert("Step added!");
+              handleClose();
+            }}
+          >
+            Add
+          </Button>
+        </Box>
+      </Modal>
     </div>
   );
-}
+};
+
+export default App;

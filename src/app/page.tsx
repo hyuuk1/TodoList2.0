@@ -4,35 +4,33 @@ import { Button, TextField, Box, Modal } from "@mui/material"; // MUIコンポ�
 import { Add } from "@mui/icons-material"; // アイコンのインポート
 import "./styles.css";
 import { Todo, Step, MiniStep, PointedObject } from "../modules/TodoClasses"; // Todo, Step, MiniStepのインポート
+import { TodoComponent } from "../components/Todo"; // TodoComponentのインポート
 
 const App = () => {
-  // インスタンス作成
-  const [todo, setTodo] = useState(new Todo("My Todo"));
-  const step1 = new Step("Step 1");
-  const step2 = new Step("Step 2");
+  const [todo, setTodo] = useState<Todo>(new Todo("My Todo"));
 
   useEffect(() => {
-    step1.addMiniStep(new MiniStep("Mini Step 1.1"));
-    step1.addMiniStep(new MiniStep("Mini Step 1.2"));
+    const step1 = new Step("Step 1");
+    const step2 = new Step("Step 2");
 
-    step2.addMiniStep(new MiniStep("Mini Step 2.1"));
+    step1.miniSteps.push(new MiniStep("Mini Step 1.1"));
+    step1.miniSteps.push(new MiniStep("Mini Step 1.2"));
 
-    todo.addStep(step1);
-    todo.addStep(step2);
+    step2.miniSteps.push(new MiniStep("Mini Step 2.1"));
+
+    todo.steps.push(step1);
+    todo.steps.push(step2);
+
+    setTodo(todo);
   }, []);
 
   const [pointedObject, setPointedObject] = useState<PointedObject | null>(null);
-
   const [editingObject, setEditingObject] = useState<PointedObject | null>(null);
-
   const [editingText, setEditingText] = useState<string>("");
-
-  const [isComposing, setIsComposing] = useState(false);
+  const [open, setOpen] = useState(false); // モーダルの状態管理
+  const [clickedObject, setClickedObject] = useState<PointedObject | null>(null); // 新しいステート
 
   const handleDoubleClick = () => {
-    if (editingObject) {
-      return;
-    }
     if (!pointedObject) {
       return;
     }
@@ -71,100 +69,38 @@ const App = () => {
     setEditingObject(null);
   };
 
-  const [open, setOpen] = useState(false); // モーダルの状態管理
+  const handleClick = () => {
+    setClickedObject(pointedObject); // クリックされたオブジェクトをセット
+  };
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  return (
-    <div>
-      <h1
-        onMouseEnter={() => setPointedObject(new PointedObject(0, -1, -1))}
-        onMouseLeave={() => setPointedObject(null)}
-        onDoubleClick={() => handleDoubleClick()}
-        className="pointer"
-      >
-        {editingObject && editingObject.todoIndex === 0 && editingObject.stepIndex === -1 ? (
-          <input
-            type="text"
-            value={editingText}
-            onChange={handleEdit}
-            onBlur={handleBlur}
-            onKeyDown={(e) => {
-              if (!isComposing && e.key === "Enter") {
-                handleBlur();
-              }
-            }}
-            onCompositionStart={() => setIsComposing(true)}
-            onCompositionEnd={() => setIsComposing(false)}
-            autoFocus
-          />
-        ) : (
-          todo.title
-        )}
-      </h1>
-      {todo.steps.map((step, stepIndex) => (
-        <div key={stepIndex}>
-          <h2
-            onMouseEnter={() => setPointedObject(new PointedObject(0, stepIndex, -1))}
-            onMouseLeave={() => setPointedObject(null)}
-            onDoubleClick={() => handleDoubleClick()}
-            className="pointer"
-          >
-            {editingObject && editingObject.stepIndex === stepIndex && editingObject.miniStepIndex === -1 ? (
-              <input
-                type="text"
-                value={editingText}
-                onChange={handleEdit}
-                onBlur={handleBlur}
-                onKeyDown={(e) => {
-                  if (!isComposing && e.key === "Enter") {
-                    handleBlur();
-                  }
-                }}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={() => setIsComposing(false)}
-                autoFocus
-              />
-            ) : (
-              `- ${step.stepTitle}`
-            )}
-          </h2>
-          <ul>
-            {step.miniSteps.map((miniStep, miniStepIndex) => (
-              <li
-                key={miniStepIndex}
-                onMouseEnter={() => setPointedObject(new PointedObject(0, stepIndex, miniStepIndex))}
-                onMouseLeave={() => setPointedObject(null)}
-                onDoubleClick={() => handleDoubleClick()}
-                className="pointer"
-              >
-                {editingObject &&
-                editingObject.stepIndex === stepIndex &&
-                editingObject.miniStepIndex === miniStepIndex ? (
-                  <input
-                    type="text"
-                    value={editingText}
-                    onChange={handleEdit}
-                    onBlur={handleBlur}
-                    onKeyDown={(e) => {
-                      if (!isComposing && e.key === "Enter") {
-                        handleBlur();
-                      }
-                    }}
-                    onCompositionStart={() => setIsComposing(true)}
-                    onCompositionEnd={() => setIsComposing(false)}
-                    autoFocus
-                  />
-                ) : (
-                  `-- ${miniStep.miniStepTitle}`
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+  const handleAdd = () => {
+    setTodo((prevTodo) => {
+      const updatedTodo = {
+        ...prevTodo, // prevTodoのすべてのプロパティをコピー
+      };
+      updatedTodo.open = !updatedTodo.open; // 開閉状態を切り替える
 
+      return updatedTodo as Todo; // 型アサーションでTodo型を保証
+    });
+  };
+
+  return (
+    <>
+      <TodoComponent
+        todo={todo}
+        pointedObject={pointedObject}
+        editingObject={editingObject}
+        editingText={editingText}
+        setPointedObject={setPointedObject}
+        setEditingObject={setEditingObject}
+        setEditingText={setEditingText}
+        handleDoubleClick={handleDoubleClick}
+        handleEdit={handleEdit}
+        handleBlur={handleBlur}
+      />
       {pointedObject && (
         <div className="centered-modal">
           <h2>Todo Index: {pointedObject.todoIndex}</h2>
@@ -175,11 +111,10 @@ const App = () => {
               <h4>Editing Object: {JSON.stringify(editingObject)}</h4>
             </div>
           )}
+          <div>{"Open: " + todo.open}</div>
           <button onClick={() => setPointedObject(null)}>閉じる</button>
         </div>
       )}
-
-      {/* フローティングボタン */}
       <Button
         variant="contained"
         color="primary"
@@ -193,7 +128,6 @@ const App = () => {
       >
         Add Step
       </Button>
-
       {/* モーダル */}
       <Modal open={open} onClose={handleClose}>
         <Box
@@ -217,13 +151,20 @@ const App = () => {
             onClick={() => {
               alert("Step added!");
               handleClose();
+              handleAdd();
+              setTodo((prevTodo) => {
+                alert("Step added!");
+                const updatedTodo = prevTodo;
+                updatedTodo.open = !updatedTodo.open; // 開閉状態を切り替える
+                return updatedTodo;
+              });
             }}
           >
             Add
           </Button>
         </Box>
       </Modal>
-    </div>
+    </>
   );
 };
 

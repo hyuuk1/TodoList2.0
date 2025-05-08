@@ -1,28 +1,32 @@
 export class Todo {
   title: string;
   steps: Step[];
+  open: boolean; // 開閉状態を管理
 
   constructor(title: string) {
     this.title = title;
     this.steps = [];
+    this.open = true; // 初期状態は閉じている
   }
 
-  addStep(step: Step) {
-    this.steps.push(step);
+  toggleOpen() {
+    this.open = !this.open; // 開閉状態を切り替える
   }
 }
 
 export class Step {
   stepTitle: string;
   miniSteps: MiniStep[];
+  open: boolean; // 開閉状態を管理
 
   constructor(stepTitle: string) {
     this.stepTitle = stepTitle;
     this.miniSteps = [];
+    this.open = true; // 初期状態は閉じている
   }
 
-  addMiniStep(miniStep: MiniStep) {
-    this.miniSteps.push(miniStep);
+  toggleOpen() {
+    this.open = !this.open; // 開閉状態を切り替える
   }
 }
 

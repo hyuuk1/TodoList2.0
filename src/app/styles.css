@@ -9,7 +9,9 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1000;
 }
-
 .pointer {
   cursor: pointer;
+}
+.highlight {
+  background-color: #e0e3fa; /* 薄水色 */
 }

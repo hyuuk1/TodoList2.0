@@ -1,36 +1,39 @@
-import { PointedObject, Todo } from "@/modules/TodoClasses";
+import { Index, Todo } from "@/modules/TodoClasses";
 import { StepComponent } from "./Step"; // StepComponentをインポート
+import { areSameIndex } from "@/app/page";
+import "../app/styles.css";
 export const TodoComponent = ({
   todo,
-  pointedObject,
+  index,
   editingObject,
   editingText,
-  setPointedObject,
-  setEditingObject,
-  setEditingText,
+  clickedObject,
   handleDoubleClick,
   handleEdit,
   handleBlur,
+  handleClick,
 }: {
   todo: Todo;
-  pointedObject: PointedObject | null;
-  editingObject: PointedObject | null;
+  index: Index;
+  editingObject: Index | null;
   editingText: string;
-  setPointedObject: React.Dispatch<React.SetStateAction<PointedObject | null>>;
-  setEditingObject: React.Dispatch<React.SetStateAction<PointedObject | null>>;
+  clickedObject: Index | null;
+  setEditingObject: React.Dispatch<React.SetStateAction<Index | null>>;
   setEditingText: React.Dispatch<React.SetStateAction<string>>;
-  handleDoubleClick: () => void;
+  setClickedObject: React.Dispatch<React.SetStateAction<Index | null>>;
+  handleDoubleClick: (index: Index, text: string) => void;
   handleEdit: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleBlur: () => void;
+  handleClick: (index: Index) => void;
 }) => {
   return (
     <div>
       <h1
-        onMouseEnter={() => setPointedObject(new PointedObject(0, -1, -1))}
-        onMouseLeave={() => setPointedObject(null)}
-        onDoubleClick={handleDoubleClick}
+        onDoubleClick={() => handleDoubleClick(index, todo.title)}
+        onClick={() => handleClick(index)}
+        className={areSameIndex(index, clickedObject) ? "highlight" : ""}
       >
-        {editingObject && editingObject.stepIndex === -1 && editingObject.miniStepIndex === -1 ? (
+        {areSameIndex(index, editingObject) ? (
           <input type="text" value={editingText} onChange={handleEdit} onBlur={handleBlur} autoFocus />
         ) : (
           todo.title
@@ -41,16 +44,14 @@ export const TodoComponent = ({
             <StepComponent
               key={stepIndex}
               step={step}
-              stepIndex={stepIndex}
-              pointedObject={pointedObject}
+              index={new Index(index.todoIndex, stepIndex)}
               editingObject={editingObject}
               editingText={editingText}
-              setPointedObject={setPointedObject}
-              setEditingObject={setEditingObject}
-              setEditingText={setEditingText}
+              clickedObject={clickedObject}
               handleDoubleClick={handleDoubleClick}
               handleEdit={handleEdit}
               handleBlur={handleBlur}
+              handleClick={handleClick}
             />
           ))
         : null}

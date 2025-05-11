@@ -1,43 +1,38 @@
-import { MiniStep, PointedObject } from "@/modules/TodoClasses";
+import { areSameIndex } from "@/app/page";
+import { MiniStep, Index } from "@/modules/TodoClasses";
 
 export const MiniStepComponent = ({
   miniStep,
-  stepIndex,
-  miniStepIndex,
-  pointedObject,
+  index,
   editingObject,
   editingText,
-  setPointedObject,
-  setEditingObject,
-  setEditingText,
+  clickedObject,
   handleDoubleClick,
   handleEdit,
   handleBlur,
+  handleClick,
 }: {
   miniStep: MiniStep;
-  stepIndex: number;
-  miniStepIndex: number;
-  pointedObject: PointedObject | null;
-  editingObject: PointedObject | null;
+  index: Index;
+  editingObject: Index | null;
   editingText: string;
-  setPointedObject: React.Dispatch<React.SetStateAction<PointedObject | null>>;
-  setEditingObject: React.Dispatch<React.SetStateAction<PointedObject | null>>;
-  setEditingText: React.Dispatch<React.SetStateAction<string>>;
-  handleDoubleClick: () => void;
+  clickedObject: Index | null;
+  handleDoubleClick: (index: Index, text: string) => void;
   handleEdit: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleBlur: () => void;
+  handleClick: (index: Index) => void;
 }) => {
   return (
-    <li
-      onMouseEnter={() => setPointedObject(new PointedObject(0, stepIndex, miniStepIndex))}
-      onMouseLeave={() => setPointedObject(null)}
-      onDoubleClick={handleDoubleClick}
+    <h2
+      onDoubleClick={() => handleDoubleClick(index, miniStep.miniStepTitle)}
+      onClick={() => handleClick(index)}
+      className={areSameIndex(index, clickedObject) ? "highlight" : ""}
     >
-      {editingObject && editingObject.stepIndex === stepIndex && editingObject.miniStepIndex === miniStepIndex ? (
+      {areSameIndex(index, editingObject) ? (
         <input type="text" value={editingText} onChange={handleEdit} onBlur={handleBlur} autoFocus />
       ) : (
-        `-- ${miniStep.miniStepTitle}`
+        `- ${miniStep.miniStepTitle}`
       )}
-    </li>
+    </h2>
   );
 };

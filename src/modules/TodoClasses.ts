@@ -38,14 +38,21 @@ export class MiniStep {
   }
 }
 
-export class PointedObject {
+export class Index {
   todoIndex: number;
   stepIndex: number;
   miniStepIndex: number;
 
-  constructor(todoIndex: number, stepIndex: number, miniStepIndex: number) {
+  constructor(todoIndex: number, stepIndex?: number, miniStepIndex?: number) {
     this.todoIndex = todoIndex;
-    this.stepIndex = stepIndex;
-    this.miniStepIndex = miniStepIndex;
+    this.stepIndex = stepIndex ? stepIndex : stepIndex === 0 ? 0 : -1;
+    this.miniStepIndex = miniStepIndex ? miniStepIndex : miniStepIndex === 0 ? 0 : -1;
   }
+}
+
+export enum Mode {
+  AddTodo = "ADD_TODO",
+  AddStep = "ADD_STEP",
+  AddMiniStep = "ADD_MINISTEP",
+  Delete = "DELETE",
 }

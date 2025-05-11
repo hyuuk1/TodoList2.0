@@ -1,48 +1,47 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Button, TextField, Box, Modal } from "@mui/material"; // MUIコンポーネントのインポート
+import { Button, ToggleButtonGroup, ToggleButton } from "@mui/material"; // MUIコンポーネントのインポート
 import { Add } from "@mui/icons-material"; // アイコンのインポート
 import "./styles.css";
-import { Todo, Step, MiniStep, PointedObject } from "../modules/TodoClasses"; // Todo, Step, MiniStepのインポート
+import { Todo, Step, MiniStep, Index, Mode } from "../modules/TodoClasses"; // Todo, Step, MiniStepのインポート
 import { TodoComponent } from "../components/Todo"; // TodoComponentのインポート
+import cloneDeep from "lodash/cloneDeep"; // cloneDeepのインポート
+import { set } from "lodash";
+
+export const areSameIndex = (checkedObject: Index, trueObect: Index | null) => {
+  if (checkedObject.todoIndex === trueObect?.todoIndex) {
+    if (checkedObject.stepIndex === trueObect?.stepIndex) {
+      if (checkedObject.miniStepIndex === trueObect?.miniStepIndex) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
 
 const App = () => {
-  const [todo, setTodo] = useState<Todo>(new Todo("My Todo"));
+  const [todos, setTodos] = useState<Todo[]>([]); // Todoの配列を管理するステート
 
   useEffect(() => {
-    const step1 = new Step("Step 1");
-    const step2 = new Step("Step 2");
-
-    step1.miniSteps.push(new MiniStep("Mini Step 1.1"));
-    step1.miniSteps.push(new MiniStep("Mini Step 1.2"));
-
-    step2.miniSteps.push(new MiniStep("Mini Step 2.1"));
-
-    todo.steps.push(step1);
-    todo.steps.push(step2);
-
-    setTodo(todo);
+    const todo = new Todo("Sample Todo"); // Todoのインスタンスを作成
+    todo.steps.push(new Step("Step 1")); // Stepを追加
+    todo.steps[0].miniSteps.push(new MiniStep("Mini Step 1")); // MiniStepを追加
+    todo.steps[0].miniSteps.push(new MiniStep("Mini Step 2")); // MiniStepを追加
+    todo.steps.push(new Step("Step 2")); // Stepを追加
+    todo.steps[1].miniSteps.push(new MiniStep("Mini Step 3")); // MiniStepを追加
+    todo.steps[1].miniSteps.push(new MiniStep("Mini Step 4")); // MiniStepを追加
+    setTodos((todos) => [...todos, todo]);
   }, []);
 
-  const [pointedObject, setPointedObject] = useState<PointedObject | null>(null);
-  const [editingObject, setEditingObject] = useState<PointedObject | null>(null);
+  const [editingObject, setEditingObject] = useState<Index | null>(null);
   const [editingText, setEditingText] = useState<string>("");
   const [open, setOpen] = useState(false); // モーダルの状態管理
-  const [clickedObject, setClickedObject] = useState<PointedObject | null>(null); // 新しいステート
+  const [clickedObject, setClickedObject] = useState<Index | null>(null); // 新しいステート
+  const [mode, setMode] = useState<Mode>(Mode.AddStep); // モードの状態管理
 
-  const handleDoubleClick = () => {
-    if (!pointedObject) {
-      return;
-    }
-    setEditingObject(pointedObject);
-
-    if (pointedObject.stepIndex === -1 && pointedObject.miniStepIndex === -1) {
-      setEditingText(todo.title);
-    } else if (pointedObject.miniStepIndex === -1) {
-      setEditingText(todo.steps[pointedObject.stepIndex].stepTitle);
-    } else {
-      setEditingText(todo.steps[pointedObject.stepIndex].miniSteps[pointedObject.miniStepIndex].miniStepTitle);
-    }
+  const handleDoubleClick = (index: Index, text: string) => {
+    setEditingObject(index);
+    setEditingText(text);
   };
 
   const handleEdit = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,17 +49,20 @@ const App = () => {
   };
 
   const handleBlur = () => {
+    console.log("handleBlur called");
     if (!editingObject) return;
 
-    setTodo((prevTodo) => {
-      const updatedTodo = prevTodo;
+    setTodos((prevTodo) => {
+      const updatedTodo = cloneDeep(prevTodo); // 深いコピーを作成
 
       if (editingObject.stepIndex === -1 && editingObject.miniStepIndex === -1) {
-        updatedTodo.title = editingText;
+        updatedTodo[editingObject.todoIndex].title = editingText;
       } else if (editingObject.miniStepIndex === -1) {
-        updatedTodo.steps[editingObject.stepIndex].stepTitle = editingText;
+        updatedTodo[editingObject.todoIndex].steps[editingObject.stepIndex].stepTitle = editingText;
       } else {
-        updatedTodo.steps[editingObject.stepIndex].miniSteps[editingObject.miniStepIndex].miniStepTitle = editingText;
+        updatedTodo[editingObject.todoIndex].steps[editingObject.stepIndex].miniSteps[
+          editingObject.miniStepIndex
+        ].miniStepTitle = editingText;
       }
 
       return updatedTodo;
@@ -69,52 +71,132 @@ const App = () => {
     setEditingObject(null);
   };
 
-  const handleClick = () => {
-    setClickedObject(pointedObject); // クリックされたオブジェクトをセット
+  const handleClick = (index: Index) => {
+    switch (mode) {
+      case Mode.AddTodo:
+        setClickedObject(null);
+        break;
+      case Mode.AddStep:
+        const notMiniStepIndex = index;
+        notMiniStepIndex.miniStepIndex = -1; // MiniStepIndexを-1に設定
+        setClickedObject(notMiniStepIndex);
+        break;
+      case Mode.AddMiniStep:
+        const notTodoIndex = index;
+        if (notTodoIndex.stepIndex === -1) {
+          notTodoIndex.stepIndex = 0; // StepIndexを0に設定
+        }
+        setClickedObject(notTodoIndex);
+        break;
+      case Mode.Delete:
+        setClickedObject(index);
+        break;
+      default:
+        console.error("unknown mode");
+    }
   };
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-
   const handleAdd = () => {
-    setTodo((prevTodo) => {
-      const updatedTodo = {
-        ...prevTodo, // prevTodoのすべてのプロパティをコピー
-      };
-      updatedTodo.open = !updatedTodo.open; // 開閉状態を切り替える
+    switch (mode) {
+      case Mode.AddTodo:
+        const todoAddedTodos = cloneDeep(todos);
+        todoAddedTodos.push(new Todo("New Todo"));
+        setTodos(todoAddedTodos);
+        break;
+      case Mode.AddStep:
+        if (!clickedObject) return;
+        const stepAddedTodos = cloneDeep(todos);
+        stepAddedTodos[clickedObject.todoIndex].steps.splice(clickedObject.stepIndex + 1, 0, new Step("New Step"));
+        setTodos(stepAddedTodos);
+        break;
+      case Mode.AddMiniStep:
+        if (!clickedObject) return;
+        const miniStepAddedTodos = cloneDeep(todos);
+        miniStepAddedTodos[clickedObject.todoIndex].steps[clickedObject.stepIndex].miniSteps.splice(
+          clickedObject.miniStepIndex + 1,
+          0,
+          new MiniStep("New Mini Step")
+        );
+        setTodos(miniStepAddedTodos);
+        break;
+      case Mode.Delete:
+        if (!clickedObject) return;
+        const deleteTodos = cloneDeep(todos);
+        if (clickedObject.stepIndex === -1) {
+          deleteTodos.splice(clickedObject.todoIndex, 1);
+        } else if (clickedObject.miniStepIndex === -1) {
+          deleteTodos[clickedObject.todoIndex].steps.splice(clickedObject.stepIndex, 1);
+        } else {
+          deleteTodos[clickedObject.todoIndex].steps[clickedObject.stepIndex].miniSteps.splice(
+            clickedObject.miniStepIndex,
+            1
+          );
+        }
+        setTodos(deleteTodos);
+        break;
+      default:
+        console.error("unknown mode");
+    }
+  };
 
-      return updatedTodo as Todo; // 型アサーションでTodo型を保証
-    });
+  const handleModeChange = (event: React.MouseEvent<HTMLElement>, newMode: Mode | null) => {
+    setClickedObject(null);
+    if (newMode !== null) {
+      setMode(newMode);
+    }
   };
 
   return (
     <>
-      <TodoComponent
-        todo={todo}
-        pointedObject={pointedObject}
-        editingObject={editingObject}
-        editingText={editingText}
-        setPointedObject={setPointedObject}
-        setEditingObject={setEditingObject}
-        setEditingText={setEditingText}
-        handleDoubleClick={handleDoubleClick}
-        handleEdit={handleEdit}
-        handleBlur={handleBlur}
-      />
-      {pointedObject && (
-        <div className="centered-modal">
-          <h2>Todo Index: {pointedObject.todoIndex}</h2>
-          {pointedObject.stepIndex >= 0 && <h3>Step Index: {pointedObject.stepIndex}</h3>}
-          {pointedObject.miniStepIndex >= 0 && <h4>Mini Step Index: {pointedObject.miniStepIndex}</h4>}
-          {editingObject && (
-            <div>
-              <h4>Editing Object: {JSON.stringify(editingObject)}</h4>
-            </div>
-          )}
-          <div>{"Open: " + todo.open}</div>
-          <button onClick={() => setPointedObject(null)}>閉じる</button>
-        </div>
+      <h1>Todo List</h1>
+      {todos ? (
+        todos.map((todo, index) => (
+          <TodoComponent
+            key={index}
+            todo={todo}
+            index={new Index(index)}
+            editingObject={editingObject}
+            editingText={editingText}
+            clickedObject={clickedObject}
+            setEditingObject={setEditingObject}
+            setEditingText={setEditingText}
+            setClickedObject={setClickedObject}
+            handleDoubleClick={handleDoubleClick}
+            handleEdit={handleEdit}
+            handleBlur={handleBlur}
+            handleClick={handleClick}
+          />
+        ))
+      ) : (
+        <p>No todos available.</p>
       )}
+      <div className="centered-modal">
+        <div>
+          <h4>Editing Object: {JSON.stringify(editingObject)}</h4>
+          <h4>clicked Object: {JSON.stringify(clickedObject)}</h4>
+          <h4>Editing Text : {editingText}</h4>
+          <h4>Mode : {mode}</h4>
+        </div>
+      </div>
+      <ToggleButtonGroup
+        value={mode}
+        exclusive
+        onChange={handleModeChange}
+        style={{
+          position: "fixed",
+          bottom: "80px",
+          right: "20px",
+          backgroundColor: "white",
+          borderRadius: "8px",
+          boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.2)",
+        }}
+      >
+        <ToggleButton value={Mode.AddTodo}>Todo</ToggleButton>
+        <ToggleButton value={Mode.AddStep}>Step</ToggleButton>
+        <ToggleButton value={Mode.AddMiniStep}>Mini</ToggleButton>
+        <ToggleButton value={Mode.Delete}>Delete</ToggleButton>
+      </ToggleButtonGroup>
+
       <Button
         variant="contained"
         color="primary"
@@ -124,46 +206,16 @@ const App = () => {
           bottom: "20px",
           right: "20px",
         }}
-        onClick={handleOpen}
+        onClick={handleAdd}
       >
-        Add Step
+        {mode === Mode.AddTodo
+          ? "Add Todo"
+          : mode === Mode.AddStep
+          ? "Add Step"
+          : mode === Mode.AddMiniStep
+          ? "Add MiniStep"
+          : "Delete"}
       </Button>
-      {/* モーダル */}
-      <Modal open={open} onClose={handleClose}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 400,
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-          }}
-        >
-          <h2>Add a New Step</h2>
-          <TextField fullWidth label="Step Title" variant="outlined" margin="normal" />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              alert("Step added!");
-              handleClose();
-              handleAdd();
-              setTodo((prevTodo) => {
-                alert("Step added!");
-                const updatedTodo = prevTodo;
-                updatedTodo.open = !updatedTodo.open; // 開閉状態を切り替える
-                return updatedTodo;
-              });
-            }}
-          >
-            Add
-          </Button>
-        </Box>
-      </Modal>
     </>
   );
 };

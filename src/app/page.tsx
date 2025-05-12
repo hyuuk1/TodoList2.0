@@ -6,27 +6,15 @@ import "./styles.css";
 import { Todo, Step, MiniStep, Index, Mode } from "../modules/TodoClasses"; // Todo, Step, MiniStepのインポート
 import { TodoComponent } from "../components/Todo"; // TodoComponentのインポート
 import cloneDeep from "lodash/cloneDeep"; // cloneDeepのインポート
-import { set } from "lodash";
-import SaveButton from "@/components/SaveButton";
 import TopBanner from "@/components/Banner";
 
-export const areSameIndex = (checkedObject: Index, trueObect: Index | null) => {
-  if (checkedObject.todoIndex === trueObect?.todoIndex) {
-    if (checkedObject.stepIndex === trueObect?.stepIndex) {
-      if (checkedObject.miniStepIndex === trueObect?.miniStepIndex) {
-        return true;
-      }
-    }
-  }
-  return false;
-};
 const LOCAL_STORAGE_KEY = "todos";
 
-export const saveTodosToLocalStorage = (todos: Todo[]) => {
+const saveTodosToLocalStorage = (todos: Todo[]) => {
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos));
 };
 
-export const loadTodosFromLocalStorage = (): Todo[] => {
+const loadTodosFromLocalStorage = (): Todo[] => {
   const data = localStorage.getItem(LOCAL_STORAGE_KEY);
   return data ? JSON.parse(data) : [];
 };

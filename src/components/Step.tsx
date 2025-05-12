@@ -1,6 +1,6 @@
 import { Index, Step } from "@/modules/TodoClasses";
 import { MiniStepComponent } from "./MiniStep"; // MiniStepComponentをインポート
-import { areSameIndex } from "@/app/page"; // checkIndexをインポート
+import { areSameIndex } from "@/lib/areSameIndex";
 import "../app/styles.css";
 import { Box, Typography, TextField } from "@mui/material";
 export const StepComponent = ({

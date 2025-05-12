@@ -1,6 +1,6 @@
 import { Index, Todo } from "@/modules/TodoClasses";
 import { StepComponent } from "./Step"; // StepComponentをインポート
-import { areSameIndex } from "@/app/page";
+import { areSameIndex } from "@/lib/areSameIndex";
 import "../app/styles.css";
 import { Box, TextField, Typography } from "@mui/material";
 export const TodoComponent = ({

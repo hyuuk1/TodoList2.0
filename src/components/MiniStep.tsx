@@ -1,4 +1,4 @@
-import { areSameIndex } from "@/app/page";
+import { areSameIndex } from "@/lib/areSameIndex";
 import { MiniStep, Index } from "@/modules/TodoClasses";
 import { Box, Typography, TextField } from "@mui/material";
 

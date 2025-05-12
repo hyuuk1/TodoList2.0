@@ -7,6 +7,8 @@ import { Todo, Step, MiniStep, Index, Mode } from "../modules/TodoClasses"; // T
 import { TodoComponent } from "../components/Todo"; // TodoComponentのインポート
 import cloneDeep from "lodash/cloneDeep"; // cloneDeepのインポート
 import { set } from "lodash";
+import SaveButton from "@/components/SaveButton";
+import TopBanner from "@/components/Banner";
 
 export const areSameIndex = (checkedObject: Index, trueObect: Index | null) => {
   if (checkedObject.todoIndex === trueObect?.todoIndex) {
@@ -18,19 +20,24 @@ export const areSameIndex = (checkedObject: Index, trueObect: Index | null) => {
   }
   return false;
 };
+const LOCAL_STORAGE_KEY = "todos";
+
+export const saveTodosToLocalStorage = (todos: Todo[]) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos));
+};
+
+export const loadTodosFromLocalStorage = (): Todo[] => {
+  const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+  return data ? JSON.parse(data) : [];
+};
 
 const App = () => {
   const [todos, setTodos] = useState<Todo[]>([]); // Todoの配列を管理するステート
 
   useEffect(() => {
-    const todo = new Todo("Sample Todo"); // Todoのインスタンスを作成
-    todo.steps.push(new Step("Step 1")); // Stepを追加
-    todo.steps[0].miniSteps.push(new MiniStep("Mini Step 1")); // MiniStepを追加
-    todo.steps[0].miniSteps.push(new MiniStep("Mini Step 2")); // MiniStepを追加
-    todo.steps.push(new Step("Step 2")); // Stepを追加
-    todo.steps[1].miniSteps.push(new MiniStep("Mini Step 3")); // MiniStepを追加
-    todo.steps[1].miniSteps.push(new MiniStep("Mini Step 4")); // MiniStepを追加
-    setTodos((todos) => [...todos, todo]);
+    const loaded = loadTodosFromLocalStorage();
+    setTodos(loaded);
+    setHasLoaded(true); // 読み込み完了フラグ
   }, []);
 
   const [editingObject, setEditingObject] = useState<Index | null>(null);
@@ -38,6 +45,13 @@ const App = () => {
   const [open, setOpen] = useState(false); // モーダルの状態管理
   const [clickedObject, setClickedObject] = useState<Index | null>(null); // 新しいステート
   const [mode, setMode] = useState<Mode>(Mode.AddStep); // モードの状態管理
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    const loaded = loadTodosFromLocalStorage();
+    setTodos(loaded);
+    setHasLoaded(true); // 読み込み完了フラグ
+  }, []);
 
   const handleDoubleClick = (index: Index, text: string) => {
     setEditingObject(index);
@@ -148,8 +162,10 @@ const App = () => {
 
   return (
     <>
-      <h1>Todo List</h1>
-      {todos ? (
+      <TopBanner onSave={() => saveTodosToLocalStorage(todos)} />
+      {!hasLoaded ? (
+        "Loading..."
+      ) : todos ? (
         todos.map((todo, index) => (
           <TodoComponent
             key={index}
@@ -170,14 +186,6 @@ const App = () => {
       ) : (
         <p>No todos available.</p>
       )}
-      <div className="centered-modal">
-        <div>
-          <h4>Editing Object: {JSON.stringify(editingObject)}</h4>
-          <h4>clicked Object: {JSON.stringify(clickedObject)}</h4>
-          <h4>Editing Text : {editingText}</h4>
-          <h4>Mode : {mode}</h4>
-        </div>
-      </div>
       <ToggleButtonGroup
         value={mode}
         exclusive

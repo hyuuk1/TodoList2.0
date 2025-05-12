@@ -2,6 +2,7 @@ import { Index, Step } from "@/modules/TodoClasses";
 import { MiniStepComponent } from "./MiniStep"; // MiniStepComponentをインポート
 import { areSameIndex } from "@/app/page"; // checkIndexをインポート
 import "../app/styles.css";
+import { Box, Typography, TextField } from "@mui/material";
 export const StepComponent = ({
   step,
   index,
@@ -24,19 +25,35 @@ export const StepComponent = ({
   handleClick: (index: Index) => void;
 }) => {
   return (
-    <div>
-      <h2
-        onDoubleClick={() => handleDoubleClick(index, step.stepTitle)}
-        onClick={() => handleClick(index)}
-        className={areSameIndex(index, clickedObject) ? "highlight" : ""}
-      >
-        {areSameIndex(index, editingObject) ? (
-          <input type="text" value={editingText} onChange={handleEdit} onBlur={handleBlur} autoFocus />
-        ) : (
-          `- ${step.stepTitle}`
-        )}
-      </h2>
-      <ul>
+    <Box sx={{ ml: 3, mb: 2 }}>
+      {areSameIndex(index, editingObject) ? (
+        <TextField
+          value={editingText}
+          onChange={handleEdit}
+          onBlur={handleBlur}
+          autoFocus
+          variant="standard"
+          size="small"
+          fullWidth
+        />
+      ) : (
+        <Typography
+          variant="h6"
+          onDoubleClick={() => handleDoubleClick(index, step.stepTitle)}
+          onClick={() => handleClick(index)}
+          sx={{
+            cursor: "pointer",
+            backgroundColor: areSameIndex(index, clickedObject) ? "lightblue" : "transparent",
+            px: 1,
+            py: 0.5,
+            borderRadius: 1,
+          }}
+        >
+          {`- ${step.stepTitle}`}
+        </Typography>
+      )}
+
+      <Box component="ul" sx={{ listStyle: "none", pl: 4 }}>
         {step.miniSteps.map((miniStep, miniStepIndex) => (
           <MiniStepComponent
             key={miniStepIndex}
@@ -51,7 +68,7 @@ export const StepComponent = ({
             clickedObject={clickedObject}
           />
         ))}
-      </ul>
-    </div>
+      </Box>
+    </Box>
   );
 };

@@ -2,6 +2,7 @@ import { Index, Todo } from "@/modules/TodoClasses";
 import { StepComponent } from "./Step"; // StepComponentをインポート
 import { areSameIndex } from "@/app/page";
 import "../app/styles.css";
+import { Box, TextField, Typography } from "@mui/material";
 export const TodoComponent = ({
   todo,
   index,
@@ -27,34 +28,48 @@ export const TodoComponent = ({
   handleClick: (index: Index) => void;
 }) => {
   return (
-    <div>
-      <h1
-        onDoubleClick={() => handleDoubleClick(index, todo.title)}
-        onClick={() => handleClick(index)}
-        className={areSameIndex(index, clickedObject) ? "highlight" : ""}
-      >
-        {areSameIndex(index, editingObject) ? (
-          <input type="text" value={editingText} onChange={handleEdit} onBlur={handleBlur} autoFocus />
-        ) : (
-          todo.title
-        )}
-      </h1>
-      {todo.open
-        ? todo.steps.map((step, stepIndex) => (
-            <StepComponent
-              key={stepIndex}
-              step={step}
-              index={new Index(index.todoIndex, stepIndex)}
-              editingObject={editingObject}
-              editingText={editingText}
-              clickedObject={clickedObject}
-              handleDoubleClick={handleDoubleClick}
-              handleEdit={handleEdit}
-              handleBlur={handleBlur}
-              handleClick={handleClick}
-            />
-          ))
-        : null}
-    </div>
+    <Box sx={{ mb: 3, p: 2, border: "1px solid #ccc", borderRadius: 2 }}>
+      {areSameIndex(index, editingObject) ? (
+        <TextField
+          value={editingText}
+          onChange={handleEdit}
+          onBlur={handleBlur}
+          autoFocus
+          variant="standard"
+          size="small"
+          fullWidth
+        />
+      ) : (
+        <Typography
+          variant="h5"
+          onDoubleClick={() => handleDoubleClick(index, todo.title)}
+          onClick={() => handleClick(index)}
+          sx={{
+            cursor: "pointer",
+            backgroundColor: areSameIndex(index, clickedObject) ? "lightblue" : "transparent",
+            px: 1,
+            py: 0.5,
+            borderRadius: 1,
+          }}
+        >
+          {todo.title}
+        </Typography>
+      )}
+      {todo.open &&
+        todo.steps.map((step, stepIndex) => (
+          <StepComponent
+            key={stepIndex}
+            step={step}
+            index={new Index(index.todoIndex, stepIndex)}
+            editingObject={editingObject}
+            editingText={editingText}
+            clickedObject={clickedObject}
+            handleDoubleClick={handleDoubleClick}
+            handleEdit={handleEdit}
+            handleBlur={handleBlur}
+            handleClick={handleClick}
+          />
+        ))}
+    </Box>
   );
 };

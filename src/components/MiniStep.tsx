@@ -1,5 +1,6 @@
 import { areSameIndex } from "@/app/page";
 import { MiniStep, Index } from "@/modules/TodoClasses";
+import { Box, Typography, TextField } from "@mui/material";
 
 export const MiniStepComponent = ({
   miniStep,
@@ -23,16 +24,36 @@ export const MiniStepComponent = ({
   handleClick: (index: Index) => void;
 }) => {
   return (
-    <h2
-      onDoubleClick={() => handleDoubleClick(index, miniStep.miniStepTitle)}
-      onClick={() => handleClick(index)}
-      className={areSameIndex(index, clickedObject) ? "highlight" : ""}
+    <Box
+      component="li"
+      sx={{
+        mb: 1,
+        px: 1,
+        py: 0.5,
+        borderRadius: 1,
+        backgroundColor: areSameIndex(index, clickedObject) ? "lightblue" : "transparent",
+        cursor: "pointer",
+      }}
     >
       {areSameIndex(index, editingObject) ? (
-        <input type="text" value={editingText} onChange={handleEdit} onBlur={handleBlur} autoFocus />
+        <TextField
+          value={editingText}
+          onChange={handleEdit}
+          onBlur={handleBlur}
+          autoFocus
+          variant="standard"
+          size="small"
+          fullWidth
+        />
       ) : (
-        `- ${miniStep.miniStepTitle}`
+        <Typography
+          variant="body2"
+          onDoubleClick={() => handleDoubleClick(index, miniStep.miniStepTitle)}
+          onClick={() => handleClick(index)}
+        >
+          {`• ${miniStep.miniStepTitle}`}
+        </Typography>
       )}
-    </h2>
+    </Box>
   );
 };
